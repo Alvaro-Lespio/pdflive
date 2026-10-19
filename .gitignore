@@ -1,0 +1,14 @@
+node_modules/
+**/uploads/*
+!**/uploads/.gitkeep
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+.DS_Store
+Thumbs.db
+

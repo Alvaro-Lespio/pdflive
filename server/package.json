@@ -1,0 +1,34 @@
+{
+  "name": "pdflive-server",
+  "version": "1.0.0",
+  "description": "Servidor de PDF Live: sirve el frontend, sube PDFs y sincroniza sesiones en tiempo real",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "check": "node --check server.js && node --check ../public/app.js && node --check ../public/join-flow.mjs && node --check test/security.test.js",
+    "repository:check": "node scripts/check-repository.js"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "multer": "^2.4.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.4.299",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^1.0.11",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.3.1"
+  },
+  "overrides": {
+    "engine.io": "^6.6.10"
+  }
+}

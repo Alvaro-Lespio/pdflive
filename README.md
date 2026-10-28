@@ -65,6 +65,3 @@ La sala admite hasta 20 participantes por defecto. Las sesiones son temporales y
 
 - Hasta 20 participantes por sesión por defecto.
 - PDFs de hasta 50 MB y 2.000 páginas por defecto.
-- Las sesiones, anotaciones y participantes se mantienen en memoria mientras el servidor está activo.
-- Al reiniciar el servidor se pierden las sesiones activas.
-- No está preparado para escalar horizontalmente sin añadir almacenamiento y coordinación compartidos.

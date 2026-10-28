@@ -1,0 +1,84 @@
+name: Render keep-alive
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Exact 14-minute sequence, repeated every seven hours; 60 requests/day.
+    - cron: '0,14,28,42,56 8,15 * * *'
+      timezone: America/Argentina/Buenos_Aires
+    - cron: '10,24,38,52 9,16 * * *'
+      timezone: America/Argentina/Buenos_Aires
+    - cron: '6,20,34,48 10,17 * * *'
+      timezone: America/Argentina/Buenos_Aires
+    - cron: '2,16,30,44,58 11,18 * * *'
+      timezone: America/Argentina/Buenos_Aires
+    - cron: '12,26,40,54 12,19 * * *'
+      timezone: America/Argentina/Buenos_Aires
+    - cron: '8,22,36,50 13,20 * * *'
+      timezone: America/Argentina/Buenos_Aires
+    - cron: '4,18,32,46 14,21 * * *'
+      timezone: America/Argentina/Buenos_Aires
+
+permissions: {}
+
+concurrency:
+  group: render-keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: GET /health
+        env:
+          RENDER_BACKEND_URL: ${{ vars.RENDER_BACKEND_URL }}
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { setTimeout: delay } = require('node:timers/promises');
+          const inWindow = () => {
+            const hour = Number(new Intl.DateTimeFormat('en-GB', {
+              timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', hourCycle: 'h23',
+            }).format(new Date()));
+            return hour >= 8 && hour < 22;
+          };
+          async function main() {
+            const raw = process.env.RENDER_BACKEND_URL?.trim();
+            if (!raw) throw new Error('Falta RENDER_BACKEND_URL: configurala en Settings > Secrets and variables > Actions > Variables.');
+            let base;
+            try { base = new URL(raw); } catch { throw new Error('RENDER_BACKEND_URL debe ser una URL HTTPS válida.'); }
+            if (base.protocol !== 'https:' || base.username || base.password || base.search || base.hash || !/^\/*$/.test(base.pathname)) {
+              throw new Error('RENDER_BACKEND_URL debe ser el origen HTTPS del backend, sin rutas, credenciales, query ni fragmento.');
+            }
+            const health = new URL('/health', base.origin);
+            for (let attempt = 1; attempt <= 2; attempt++) {
+              // Also applies to manual runs and retries; delayed jobs must not ping at night.
+              if (!inWindow()) {
+                console.log('Sin petición: fuera de 08:00–22:00 America/Argentina/Buenos_Aires.');
+                return;
+              }
+              try {
+                console.log(`GET /health — intento ${attempt}/2 (timeout 90 s).`);
+                const response = await fetch(health, { method: 'GET', redirect: 'manual', signal: AbortSignal.timeout(90000) });
+                await response.body?.cancel();
+                if (response.status === 200) {
+                  console.log('OK: /health respondió HTTP 200.');
+                  return;
+                }
+                console.log(`HTTP ${response.status}: ${response.status === 404 ? 'verificá el despliegue de /health y la URL del backend' : 'respuesta inesperada del backend; puede estar iniciando o presentar un error'}.`);
+                if (response.status < 500 || attempt === 2) throw new Error(`Falló /health: HTTP ${response.status}.`);
+              } catch (error) {
+                if (error.message.startsWith('Falló /health:')) throw error;
+                // Never log URLs, response bodies, credentials or raw network errors.
+                console.log(error.name === 'TimeoutError'
+                  ? 'Timeout: el backend no respondió en 90 s; Render puede estar iniciando.'
+                  : 'Error de conexión: no se pudo completar la petición al backend (red/DNS/TLS o servidor sin respuesta).');
+                if (attempt === 2) throw new Error('Keep-alive falló después de dos intentos.');
+              }
+              console.log('Reintento único en 5 s para tolerar un inicio en frío o un fallo transitorio.');
+              await delay(5000);
+            }
+          }
+          main().catch(error => { console.error(error.message); process.exitCode = 1; });
+          NODE

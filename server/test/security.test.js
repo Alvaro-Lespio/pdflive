@@ -83,6 +83,19 @@ function emit(socketClient, event, payload) {
 
 const pause = (ms = 30) => new Promise((resolve) => setTimeout(resolve, ms));
 
+test("health y healthz son públicos y no crean sesiones ni conexiones Socket.IO", async (t) => {
+  const ctx = await fixture(); t.after(() => ctx.close());
+  for (const endpoint of ["/health", "/healthz"]) {
+    const response = await request(ctx.service.app).get(endpoint);
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.body, { status: "ok" });
+    assert.equal(response.headers["set-cookie"], undefined);
+  }
+  assert.equal(ctx.service.sessions.size, 0);
+  assert.equal(ctx.service.io.engine.clientsCount, 0);
+  assert.deepEqual(await fsp.readdir(ctx.uploadDir), []);
+});
+
 test("cabeceras, CSP y bibliotecas autoalojadas están configuradas", async (t) => {
   const ctx = await fixture(); t.after(() => ctx.close());
   const response = await request(ctx.service.app).get("/");

@@ -68,7 +68,3 @@ La sala admite hasta 20 participantes por defecto. Las sesiones son temporales y
 - Las sesiones, anotaciones y participantes se mantienen en memoria mientras el servidor está activo.
 - Al reiniciar el servidor se pierden las sesiones activas.
 - No está preparado para escalar horizontalmente sin añadir almacenamiento y coordinación compartidos.
-
-## Licencia
-
-Este repositorio no declara todavía una licencia pública. Si quieres permitir reutilización o contribuciones externas, añade un archivo `LICENSE` con la licencia elegida.

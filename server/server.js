@@ -220,7 +220,7 @@ function createPdfLiveServer(options = {}) {
     }
     next();
   });
-  app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
+  app.get(["/health", "/healthz"], (_req, res) => res.json({ status: "ok" }));
   const pdfjsRoot = path.dirname(require.resolve("pdfjs-dist/package.json"));
   app.get("/vendor/pdfjs/pdf.mjs", (_req, res) => res.sendFile(require.resolve("pdfjs-dist/build/pdf.mjs")));
   app.get("/vendor/pdfjs/pdf.worker.mjs", (_req, res) => res.sendFile(require.resolve("pdfjs-dist/build/pdf.worker.mjs")));
